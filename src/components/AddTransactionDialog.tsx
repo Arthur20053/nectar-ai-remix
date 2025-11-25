@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RepeatIcon } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -30,6 +31,7 @@ export function AddTransactionDialog({ open, onOpenChange, onSuccess }: AddTrans
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isRecurring, setIsRecurring] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -67,6 +69,7 @@ export function AddTransactionDialog({ open, onOpenChange, onSuccess }: AddTrans
         type,
         category_id: categoryId || null,
         date,
+        is_recurring: isRecurring,
       });
 
       if (error) throw error;
@@ -96,6 +99,7 @@ export function AddTransactionDialog({ open, onOpenChange, onSuccess }: AddTrans
     setAmount('');
     setCategoryId('');
     setDate(new Date().toISOString().split('T')[0]);
+    setIsRecurring(false);
   };
 
   return (
@@ -163,6 +167,17 @@ export function AddTransactionDialog({ open, onOpenChange, onSuccess }: AddTrans
                   onChange={(e) => setDate(e.target.value)}
                   required
                 />
+              </div>
+              <div className="flex items-center space-x-2 pt-2">
+                <Checkbox
+                  id="recurring"
+                  checked={isRecurring}
+                  onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+                />
+                <Label htmlFor="recurring" className="flex items-center gap-2 cursor-pointer">
+                  <RepeatIcon className="w-4 h-4" />
+                  Repetir mensalmente
+                </Label>
               </div>
             </TabsContent>
           </Tabs>
