@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, LogOut, Plus, TrendingDown, TrendingUp, Wallet, Sparkles } from 'lucide-react';
+import { Loader2, LogOut, Plus, TrendingDown, TrendingUp, Wallet, Sparkles, CalendarIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { TransactionList } from '@/components/TransactionList';
 import { AddTransactionDialog } from '@/components/AddTransactionDialog';
 import { AIAnalysis } from '@/components/AIAnalysis';
@@ -18,6 +19,7 @@ interface Stats {
 
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<Stats>({ totalReceitas: 0, totalDespesas: 0, saldo: 0 });
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -133,6 +135,10 @@ const Dashboard = () => {
           <Button onClick={() => setShowAddDialog(true)} size="lg">
             <Plus className="w-5 h-5 mr-2" />
             Nova Transação
+          </Button>
+          <Button onClick={() => navigate('/calendar')} variant="outline" size="lg">
+            <CalendarIcon className="w-5 h-5 mr-2" />
+            Calendário
           </Button>
           <Button onClick={() => setShowAIAnalysis(true)} variant="outline" size="lg">
             <Sparkles className="w-5 h-5 mr-2" />

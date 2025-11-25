@@ -84,6 +84,7 @@ export type Database = {
           date: string
           description: string
           id: string
+          is_recurring: boolean
           type: string
           updated_at: string | null
           user_id: string | null
@@ -95,6 +96,7 @@ export type Database = {
           date?: string
           description: string
           id?: string
+          is_recurring?: boolean
           type: string
           updated_at?: string | null
           user_id?: string | null
@@ -106,6 +108,7 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          is_recurring?: boolean
           type?: string
           updated_at?: string | null
           user_id?: string | null
