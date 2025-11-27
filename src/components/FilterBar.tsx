@@ -60,17 +60,17 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
   };
 
   return (
-    <Card className="p-4 mb-6">
+    <Card className="glass-card p-4 mb-6">
       <div className="flex items-center gap-2 mb-3">
         <Filter className="w-5 h-5 text-primary" />
         <h3 className="font-semibold">Filtros</h3>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <Select value={dateRange} onValueChange={(v: any) => setDateRange(v)}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-secondary/50">
             <SelectValue placeholder="Período" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-card backdrop-blur-md border-border">
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="thisMonth">Este Mês</SelectItem>
             <SelectItem value="lastMonth">Mês Passado</SelectItem>
@@ -82,12 +82,12 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
           <div className="flex gap-2 md:col-span-2">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full bg-secondary/50">
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {customStartDate ? format(customStartDate, 'dd/MM/yyyy') : 'Início'}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0 glass-card">
                 <Calendar
                   mode="single"
                   selected={customStartDate}
@@ -98,12 +98,12 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
             </Popover>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full bg-secondary/50">
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {customEndDate ? format(customEndDate, 'dd/MM/yyyy') : 'Fim'}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0 glass-card">
                 <Calendar
                   mode="single"
                   selected={customEndDate}
@@ -116,10 +116,10 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
         )}
 
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-secondary/50">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-card backdrop-blur-md border-border">
             <SelectItem value="all">Todas Categorias</SelectItem>
             {categories.map(cat => (
               <SelectItem key={cat.id} value={cat.id}>
@@ -130,10 +130,10 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
         </Select>
 
         <Select value={type} onValueChange={(v: any) => setType(v)}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-secondary/50">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-card backdrop-blur-md border-border">
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="receita">Receitas</SelectItem>
             <SelectItem value="despesa">Despesas</SelectItem>
