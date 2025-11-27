@@ -164,7 +164,7 @@ export function TransactionList({ onUpdate }: TransactionListProps) {
     <>
       <FilterBar onFilterChange={handleFilterChange} />
       
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Transações</CardTitle>
@@ -186,12 +186,12 @@ export function TransactionList({ onUpdate }: TransactionListProps) {
               {filteredTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex items-center justify-between p-4 border border-border/50 rounded-lg hover:bg-secondary/30 transition-colors backdrop-blur-sm"
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: transaction.categories?.color + '20' }}
+                    className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm"
+                    style={{ backgroundColor: transaction.categories?.color + '30' }}
                   >
                     <span
                       className="text-lg font-bold"
@@ -210,10 +210,11 @@ export function TransactionList({ onUpdate }: TransactionListProps) {
                     <div className="flex items-center gap-2 mt-1">
                       <Badge
                         variant="outline"
-                        className="text-xs"
+                        className="text-xs backdrop-blur-sm"
                         style={{
                           borderColor: transaction.categories?.color,
                           color: transaction.categories?.color,
+                          backgroundColor: transaction.categories?.color + '20',
                         }}
                       >
                         {transaction.categories?.name}
