@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      caixa: {
+        Row: {
+          created_at: string
+          data_abertura: string
+          data_fechamento: string | null
+          id: string
+          numero: number
+          observacao: string | null
+          saldo_final: number | null
+          saldo_inicial: number | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_abertura?: string
+          data_fechamento?: string | null
+          id?: string
+          numero: number
+          observacao?: string | null
+          saldo_final?: number | null
+          saldo_inicial?: number | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_abertura?: string
+          data_fechamento?: string | null
+          id?: string
+          numero?: number
+          observacao?: string | null
+          saldo_final?: number | null
+          saldo_inicial?: number | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caixa_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           color: string | null
@@ -45,6 +92,349 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "categories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clientes: {
+        Row: {
+          cep: string | null
+          cidade: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cep?: string | null
+          cidade?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cep?: string | null
+          cidade?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contas_pagar: {
+        Row: {
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string
+          forma_pagamento: string | null
+          fornecedor_id: string | null
+          id: string
+          observacao: string | null
+          status: string | null
+          user_id: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao: string
+          forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          observacao?: string | null
+          status?: string | null
+          user_id?: string | null
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          observacao?: string | null
+          status?: string | null
+          user_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contas_receber: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          data_recebimento: string | null
+          data_vencimento: string
+          descricao: string
+          forma_pagamento: string | null
+          id: string
+          observacao: string | null
+          status: string | null
+          user_id: string | null
+          valor: number
+          venda_id: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          data_recebimento?: string | null
+          data_vencimento: string
+          descricao: string
+          forma_pagamento?: string | null
+          id?: string
+          observacao?: string | null
+          status?: string | null
+          user_id?: string | null
+          valor: number
+          venda_id?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          data_recebimento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          forma_pagamento?: string | null
+          id?: string
+          observacao?: string | null
+          status?: string | null
+          user_id?: string | null
+          valor?: number
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_receber_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fornecedores: {
+        Row: {
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          nome_fantasia: string | null
+          razao_social: string
+          telefone: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          razao_social: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          razao_social?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movimentos_caixa: {
+        Row: {
+          caixa_id: string | null
+          created_at: string
+          data_lancamento: string
+          descricao: string | null
+          forma_pagamento: string | null
+          id: string
+          observacao: string | null
+          origem: string | null
+          tipo: string
+          user_id: string | null
+          valor: number
+        }
+        Insert: {
+          caixa_id?: string | null
+          created_at?: string
+          data_lancamento?: string
+          descricao?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string | null
+          tipo: string
+          user_id?: string | null
+          valor: number
+        }
+        Update: {
+          caixa_id?: string | null
+          created_at?: string
+          data_lancamento?: string
+          descricao?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string | null
+          tipo?: string
+          user_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentos_caixa_caixa_id_fkey"
+            columns: ["caixa_id"]
+            isOneToOne: false
+            referencedRelation: "caixa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentos_caixa_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          codigo: string | null
+          created_at: string
+          descricao: string | null
+          estoque_atual: number | null
+          estoque_minimo: number | null
+          id: string
+          nome: string
+          preco_custo: number | null
+          preco_venda: number | null
+          unidade: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          codigo?: string | null
+          created_at?: string
+          descricao?: string | null
+          estoque_atual?: number | null
+          estoque_minimo?: number | null
+          id?: string
+          nome: string
+          preco_custo?: number | null
+          preco_venda?: number | null
+          unidade?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          codigo?: string | null
+          created_at?: string
+          descricao?: string | null
+          estoque_atual?: number | null
+          estoque_minimo?: number | null
+          id?: string
+          nome?: string
+          preco_custo?: number | null
+          preco_venda?: number | null
+          unidade?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -126,6 +516,111 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendas: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          data_venda: string
+          desconto: number | null
+          forma_pagamento: string | null
+          id: string
+          numero: number | null
+          observacao: string | null
+          status: string | null
+          user_id: string | null
+          valor_final: number | null
+          valor_total: number | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          data_venda?: string
+          desconto?: number | null
+          forma_pagamento?: string | null
+          id?: string
+          numero?: number | null
+          observacao?: string | null
+          status?: string | null
+          user_id?: string | null
+          valor_final?: number | null
+          valor_total?: number | null
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          data_venda?: string
+          desconto?: number | null
+          forma_pagamento?: string | null
+          id?: string
+          numero?: number | null
+          observacao?: string | null
+          status?: string | null
+          user_id?: string | null
+          valor_final?: number | null
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendas_itens: {
+        Row: {
+          created_at: string
+          id: string
+          preco_unitario: number
+          produto_id: string | null
+          quantidade: number | null
+          subtotal: number
+          venda_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          preco_unitario: number
+          produto_id?: string | null
+          quantidade?: number | null
+          subtotal: number
+          venda_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          preco_unitario?: number
+          produto_id?: string | null
+          quantidade?: number | null
+          subtotal?: number
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_itens_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
             referencedColumns: ["id"]
           },
         ]
