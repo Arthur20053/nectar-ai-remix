@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { Loader2, Plus, Search, Trash2, Printer, RefreshCw, DollarSign, Package, ShoppingCart } from 'lucide-react';
+import { Loader2, Plus, Search, Trash2, Printer, RefreshCw, DollarSign, Package, ShoppingCart, Barcode, ScanLine } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -76,6 +76,12 @@ const CaixaPage = () => {
   const [produtoSearch, setProdutoSearch] = useState('');
   const [itensVenda, setItensVenda] = useState<ItemVenda[]>([]);
   const [formaPagamento, setFormaPagamento] = useState('DINHEIRO');
+  
+  // Barcode scanner state
+  const [barcodeMode, setBarcodeMode] = useState(false);
+  const [barcodeBuffer, setBarcodeBuffer] = useState('');
+  const barcodeInputRef = useRef<HTMLInputElement>(null);
+  const lastKeyTime = useRef<number>(0);
 
   // Form states
   const [novoMovimento, setNovoMovimento] = useState({
@@ -294,7 +300,7 @@ const CaixaPage = () => {
     }
   };
 
-  const handleAddProduto = (produto: Produto) => {
+  const handleAddProduto = useCallback((produto: Produto) => {
     const existente = itensVenda.find((i) => i.produto_id === produto.id);
     if (existente) {
       setItensVenda((prev) =>
@@ -318,7 +324,52 @@ const CaixaPage = () => {
       ]);
     }
     setProdutoSearch('');
-  };
+    setBarcodeBuffer('');
+  }, [itensVenda]);
+
+  // Barcode scanner handler - adds product by exact code match
+  const handleBarcodeInput = useCallback((code: string) => {
+    const produto = produtos.find((p) => p.codigo === code);
+    if (produto) {
+      handleAddProduto(produto);
+      toast({ title: 'Produto adicionado', description: `${produto.nome} foi adicionado à venda.` });
+    } else {
+      toast({ title: 'Produto não encontrado', description: `Código "${code}" não encontrado.`, variant: 'destructive' });
+    }
+  }, [produtos, handleAddProduto, toast]);
+
+  // Handle keyboard input for barcode scanner
+  useEffect(() => {
+    if (!showVendaRapida || !barcodeMode) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const now = Date.now();
+      
+      // If Enter is pressed, process the barcode
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (barcodeBuffer.trim()) {
+          handleBarcodeInput(barcodeBuffer.trim());
+        }
+        setBarcodeBuffer('');
+        return;
+      }
+
+      // Only accept alphanumeric characters
+      if (e.key.length === 1 && /^[a-zA-Z0-9]$/.test(e.key)) {
+        // If more than 100ms since last key, reset buffer (new scan)
+        if (now - lastKeyTime.current > 100) {
+          setBarcodeBuffer(e.key);
+        } else {
+          setBarcodeBuffer((prev) => prev + e.key);
+        }
+        lastKeyTime.current = now;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showVendaRapida, barcodeMode, barcodeBuffer, handleBarcodeInput]);
 
   const handleRemoveItem = (produtoId: string) => {
     setItensVenda((prev) => prev.filter((i) => i.produto_id !== produtoId));
@@ -732,61 +783,128 @@ const CaixaPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Venda Rápida com Busca de Produtos */}
-      <Dialog open={showVendaRapida} onOpenChange={setShowVendaRapida}>
+      {/* Dialog: Venda Rápida com Busca de Produtos e Leitor de Código de Barras */}
+      <Dialog open={showVendaRapida} onOpenChange={(open) => {
+        setShowVendaRapida(open);
+        if (!open) {
+          setBarcodeMode(false);
+          setBarcodeBuffer('');
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5" />
               Venda Rápida
             </DialogTitle>
-            <DialogDescription>Pesquise e adicione produtos à venda.</DialogDescription>
+            <DialogDescription>Pesquise produtos ou use o leitor de código de barras.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Product Search */}
-            <div className="space-y-2">
-              <Label>Pesquisar Produto (código ou nome)</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Digite o código ou nome do produto..."
-                  value={produtoSearch}
-                  onChange={(e) => setProdutoSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
+            {/* Barcode Mode Toggle */}
+            <div className="flex items-center gap-4">
+              <Button
+                variant={barcodeMode ? 'default' : 'outline'}
+                onClick={() => {
+                  setBarcodeMode(!barcodeMode);
+                  setBarcodeBuffer('');
+                }}
+                className="flex items-center gap-2"
+              >
+                {barcodeMode ? <ScanLine className="w-4 h-4 animate-pulse" /> : <Barcode className="w-4 h-4" />}
+                {barcodeMode ? 'Modo Scanner Ativo' : 'Ativar Scanner'}
+              </Button>
               
-              {/* Product suggestions */}
-              {produtoSearch && produtosFiltrados.length > 0 && (
-                <Card className="max-h-48 overflow-y-auto">
-                  {produtosFiltrados.slice(0, 10).map((produto) => (
-                    <button
-                      key={produto.id}
-                      onClick={() => handleAddProduto(produto)}
-                      className="w-full flex items-center justify-between p-3 hover:bg-muted/50 border-b last:border-b-0 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Package className="w-4 h-4 text-muted-foreground" />
-                        <div className="text-left">
-                          <p className="font-medium">{produto.nome}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Código: {produto.codigo || 'N/A'} | Estoque: {produto.estoque_atual}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge variant="secondary">R$ {Number(produto.preco_venda).toFixed(2)}</Badge>
-                    </button>
-                  ))}
-                </Card>
-              )}
-
-              {produtoSearch && produtosFiltrados.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Nenhum produto encontrado. Cadastre produtos primeiro.
-                </p>
+              {barcodeMode && (
+                <div className="flex-1 flex items-center gap-2 bg-primary/10 rounded-lg px-4 py-2 border border-primary/30">
+                  <ScanLine className="w-5 h-5 text-primary animate-pulse" />
+                  <span className="text-sm font-medium">
+                    {barcodeBuffer ? `Código: ${barcodeBuffer}` : 'Aguardando leitura do código de barras...'}
+                  </span>
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    Pressione Enter após escanear
+                  </span>
+                </div>
               )}
             </div>
+
+            {/* Manual barcode input */}
+            {barcodeMode && (
+              <div className="space-y-2">
+                <Label>Ou digite o código manualmente</Label>
+                <div className="flex gap-2">
+                  <Input
+                    ref={barcodeInputRef}
+                    placeholder="Digite o código do produto..."
+                    value={barcodeBuffer}
+                    onChange={(e) => setBarcodeBuffer(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && barcodeBuffer.trim()) {
+                        e.preventDefault();
+                        handleBarcodeInput(barcodeBuffer.trim());
+                      }
+                    }}
+                    className="flex-1"
+                    autoFocus
+                  />
+                  <Button 
+                    onClick={() => {
+                      if (barcodeBuffer.trim()) {
+                        handleBarcodeInput(barcodeBuffer.trim());
+                      }
+                    }}
+                  >
+                    Adicionar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Product Search - only show when not in barcode mode */}
+            {!barcodeMode && (
+              <div className="space-y-2">
+                <Label>Pesquisar Produto (código ou nome)</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Digite o código ou nome do produto..."
+                    value={produtoSearch}
+                    onChange={(e) => setProdutoSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              
+                {/* Product suggestions */}
+                {produtoSearch && produtosFiltrados.length > 0 && (
+                  <Card className="max-h-48 overflow-y-auto">
+                    {produtosFiltrados.slice(0, 10).map((produto) => (
+                      <button
+                        key={produto.id}
+                        onClick={() => handleAddProduto(produto)}
+                        className="w-full flex items-center justify-between p-3 hover:bg-muted/50 border-b last:border-b-0 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <div className="text-left">
+                            <p className="font-medium">{produto.nome}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Código: {produto.codigo || 'N/A'} | Estoque: {produto.estoque_atual}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary">R$ {Number(produto.preco_venda).toFixed(2)}</Badge>
+                      </button>
+                    ))}
+                  </Card>
+                )}
+
+                {produtoSearch && produtosFiltrados.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Nenhum produto encontrado. Cadastre produtos primeiro.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Items table */}
             {itensVenda.length > 0 && (
