@@ -17,6 +17,9 @@ import Fornecedores from "./pages/Fornecedores";
 import Vendas from "./pages/Vendas";
 import ContasReceber from "./pages/ContasReceber";
 import ContasPagar from "./pages/ContasPagar";
+import FluxoCaixa from "./pages/FluxoCaixa";
+import Relatorios from "./pages/Relatorios";
+import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +45,9 @@ const App = () => (
             <Route path="/vendas" element={<Vendas />} />
             <Route path="/contas-receber" element={<ContasReceber />} />
             <Route path="/contas-pagar" element={<ContasPagar />} />
+            <Route path="/fluxo-caixa" element={<FluxoCaixa />} />
+            <Route path="/relatorios" element={<Relatorios />} />
+            <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
