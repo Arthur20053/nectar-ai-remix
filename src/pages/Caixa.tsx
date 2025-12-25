@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,14 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { Loader2, Plus, Search, Edit, Trash2, Printer, RefreshCw, DollarSign } from 'lucide-react';
+import { Loader2, Plus, Search, Trash2, Printer, RefreshCw, DollarSign, Package, ShoppingCart } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -41,6 +41,23 @@ interface MovimentoCaixa {
   observacao: string | null;
 }
 
+interface Produto {
+  id: string;
+  codigo: string | null;
+  nome: string;
+  preco_venda: number;
+  estoque_atual: number;
+}
+
+interface ItemVenda {
+  produto_id: string;
+  codigo: string | null;
+  nome: string;
+  quantidade: number;
+  preco_unitario: number;
+  subtotal: number;
+}
+
 const CaixaPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -48,10 +65,17 @@ const CaixaPage = () => {
   const [caixas, setCaixas] = useState<Caixa[]>([]);
   const [caixaAtual, setCaixaAtual] = useState<Caixa | null>(null);
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
   const [statusFilter, setStatusFilter] = useState('ABERTO');
   const [searchQuery, setSearchQuery] = useState('');
   const [showNovoLancamento, setShowNovoLancamento] = useState(false);
   const [showAbrirCaixa, setShowAbrirCaixa] = useState(false);
+  const [showVendaRapida, setShowVendaRapida] = useState(false);
+
+  // Search for products
+  const [produtoSearch, setProdutoSearch] = useState('');
+  const [itensVenda, setItensVenda] = useState<ItemVenda[]>([]);
+  const [formaPagamento, setFormaPagamento] = useState('DINHEIRO');
 
   // Form states
   const [novoMovimento, setNovoMovimento] = useState({
@@ -67,9 +91,21 @@ const CaixaPage = () => {
     observacao: '',
   });
 
+  // Filtered products based on search
+  const produtosFiltrados = useMemo(() => {
+    if (!produtoSearch.trim()) return produtos;
+    const search = produtoSearch.toLowerCase();
+    return produtos.filter(
+      (p) =>
+        p.nome.toLowerCase().includes(search) ||
+        (p.codigo && p.codigo.toLowerCase().includes(search))
+    );
+  }, [produtos, produtoSearch]);
+
   useEffect(() => {
     if (user) {
       loadCaixas();
+      loadProdutos();
     }
   }, [user, statusFilter]);
 
@@ -91,7 +127,6 @@ const CaixaPage = () => {
       if (error) throw error;
       setCaixas(data || []);
 
-      // Load current open caixa
       const caixaAberto = data?.find((c) => c.status === 'ABERTO');
       if (caixaAberto) {
         setCaixaAtual(caixaAberto);
@@ -127,17 +162,32 @@ const CaixaPage = () => {
     }
   };
 
+  const loadProdutos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('produtos')
+        .select('id, codigo, nome, preco_venda, estoque_atual')
+        .eq('user_id', user?.id)
+        .order('nome');
+
+      if (error) throw error;
+      setProdutos(data || []);
+    } catch (error) {
+      console.error('Error loading produtos:', error);
+    }
+  };
+
   const handleAbrirCaixa = async () => {
     try {
       const proximoNumero = caixas.length > 0 ? Math.max(...caixas.map((c) => c.numero)) + 1 : 1;
 
-      const { data, error } = await supabase.from('caixa').insert({
+      const { error } = await supabase.from('caixa').insert({
         user_id: user?.id,
         numero: proximoNumero,
         saldo_inicial: parseFloat(novoCaixa.saldo_inicial) || 0,
         observacao: novoCaixa.observacao || null,
         status: 'ABERTO',
-      }).select().single();
+      });
 
       if (error) throw error;
 
@@ -241,6 +291,131 @@ const CaixaPage = () => {
         description: 'Não foi possível remover o lançamento',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleAddProduto = (produto: Produto) => {
+    const existente = itensVenda.find((i) => i.produto_id === produto.id);
+    if (existente) {
+      setItensVenda((prev) =>
+        prev.map((i) =>
+          i.produto_id === produto.id
+            ? { ...i, quantidade: i.quantidade + 1, subtotal: (i.quantidade + 1) * i.preco_unitario }
+            : i
+        )
+      );
+    } else {
+      setItensVenda((prev) => [
+        ...prev,
+        {
+          produto_id: produto.id,
+          codigo: produto.codigo,
+          nome: produto.nome,
+          quantidade: 1,
+          preco_unitario: Number(produto.preco_venda),
+          subtotal: Number(produto.preco_venda),
+        },
+      ]);
+    }
+    setProdutoSearch('');
+  };
+
+  const handleRemoveItem = (produtoId: string) => {
+    setItensVenda((prev) => prev.filter((i) => i.produto_id !== produtoId));
+  };
+
+  const handleUpdateQuantidade = (produtoId: string, quantidade: number) => {
+    if (quantidade <= 0) {
+      handleRemoveItem(produtoId);
+      return;
+    }
+    setItensVenda((prev) =>
+      prev.map((i) =>
+        i.produto_id === produtoId
+          ? { ...i, quantidade, subtotal: quantidade * i.preco_unitario }
+          : i
+      )
+    );
+  };
+
+  const totalVenda = itensVenda.reduce((sum, i) => sum + i.subtotal, 0);
+
+  const handleFinalizarVenda = async () => {
+    if (!caixaAtual || itensVenda.length === 0) return;
+
+    try {
+      // Get next venda number
+      const { data: lastVenda } = await supabase
+        .from('vendas')
+        .select('numero')
+        .eq('user_id', user?.id)
+        .order('numero', { ascending: false })
+        .limit(1);
+
+      const proximoNumero = lastVenda && lastVenda.length > 0 ? (lastVenda[0].numero || 0) + 1 : 1;
+
+      // Create venda
+      const { data: venda, error: vendaError } = await supabase
+        .from('vendas')
+        .insert({
+          user_id: user?.id,
+          numero: proximoNumero,
+          valor_total: totalVenda,
+          desconto: 0,
+          valor_final: totalVenda,
+          forma_pagamento: formaPagamento,
+          status: 'FINALIZADA',
+        })
+        .select()
+        .single();
+
+      if (vendaError) throw vendaError;
+
+      // Create venda items
+      const itensData = itensVenda.map((item) => ({
+        venda_id: venda.id,
+        produto_id: item.produto_id,
+        quantidade: item.quantidade,
+        preco_unitario: item.preco_unitario,
+        subtotal: item.subtotal,
+      }));
+
+      const { error: itensError } = await supabase.from('vendas_itens').insert(itensData);
+      if (itensError) throw itensError;
+
+      // Update stock
+      for (const item of itensVenda) {
+        const produto = produtos.find((p) => p.id === item.produto_id);
+        if (produto) {
+          await supabase
+            .from('produtos')
+            .update({ estoque_atual: Math.max(0, (produto.estoque_atual || 0) - item.quantidade) })
+            .eq('id', item.produto_id);
+        }
+      }
+
+      // Add movimento to caixa
+      const { error: movError } = await supabase.from('movimentos_caixa').insert({
+        user_id: user?.id,
+        caixa_id: caixaAtual.id,
+        origem: 'VENDA',
+        tipo: 'CREDITO',
+        valor: totalVenda,
+        forma_pagamento: formaPagamento,
+        descricao: `Venda #${proximoNumero}`,
+      });
+
+      if (movError) throw movError;
+
+      toast({ title: 'Sucesso', description: `Venda #${proximoNumero} finalizada!` });
+      setShowVendaRapida(false);
+      setItensVenda([]);
+      setFormaPagamento('DINHEIRO');
+      loadMovimentos(caixaAtual.id);
+      loadProdutos();
+    } catch (error) {
+      console.error('Error finalizing venda:', error);
+      toast({ title: 'Erro', description: 'Não foi possível finalizar a venda', variant: 'destructive' });
     }
   };
 
@@ -405,19 +580,22 @@ const CaixaPage = () => {
         <div className="flex items-center justify-between">
           <Button variant="outline" onClick={() => loadCaixas()}>
             <RefreshCw className="w-4 h-4 mr-2" />
-            Outros Caixas
+            Atualizar
           </Button>
 
           <div className="flex items-center gap-2">
             {caixaAtual && (
               <>
-                <Button variant="outline" onClick={() => setShowNovoLancamento(true)}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Alterar Lançamento
+                <Button variant="default" onClick={() => setShowVendaRapida(true)}>
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Venda Rápida
                 </Button>
-                <Button onClick={() => setShowNovoLancamento(true)}>
+                <Button variant="outline" onClick={() => setShowNovoLancamento(true)}>
                   <Plus className="w-4 h-4 mr-2" />
-                  F4 | Novo Lançamento
+                  Novo Lançamento
+                </Button>
+                <Button variant="secondary" onClick={handleFecharCaixa}>
+                  Fechar Caixa
                 </Button>
               </>
             )}
@@ -425,11 +603,6 @@ const CaixaPage = () => {
               <Button onClick={() => setShowAbrirCaixa(true)}>
                 <DollarSign className="w-4 h-4 mr-2" />
                 Abrir Caixa
-              </Button>
-            )}
-            {caixaAtual && (
-              <Button variant="outline" onClick={handleFecharCaixa}>
-                F5 | Caixa Diário
               </Button>
             )}
             <Button variant="outline">
@@ -441,7 +614,7 @@ const CaixaPage = () => {
 
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground border-t border-border pt-4">
-          <span className="font-medium">Empresa</span>
+          <span className="font-medium">Supreme ERP</span>
         </div>
       </motion.div>
 
@@ -450,6 +623,7 @@ const CaixaPage = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Novo Lançamento</DialogTitle>
+            <DialogDescription>Adicione um novo lançamento manual ao caixa.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -527,6 +701,7 @@ const CaixaPage = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Abrir Caixa</DialogTitle>
+            <DialogDescription>Informe o saldo inicial para abrir o caixa.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -553,6 +728,139 @@ const CaixaPage = () => {
               Cancelar
             </Button>
             <Button onClick={handleAbrirCaixa}>Abrir Caixa</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Venda Rápida com Busca de Produtos */}
+      <Dialog open={showVendaRapida} onOpenChange={setShowVendaRapida}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5" />
+              Venda Rápida
+            </DialogTitle>
+            <DialogDescription>Pesquise e adicione produtos à venda.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Product Search */}
+            <div className="space-y-2">
+              <Label>Pesquisar Produto (código ou nome)</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Digite o código ou nome do produto..."
+                  value={produtoSearch}
+                  onChange={(e) => setProdutoSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              
+              {/* Product suggestions */}
+              {produtoSearch && produtosFiltrados.length > 0 && (
+                <Card className="max-h-48 overflow-y-auto">
+                  {produtosFiltrados.slice(0, 10).map((produto) => (
+                    <button
+                      key={produto.id}
+                      onClick={() => handleAddProduto(produto)}
+                      className="w-full flex items-center justify-between p-3 hover:bg-muted/50 border-b last:border-b-0 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Package className="w-4 h-4 text-muted-foreground" />
+                        <div className="text-left">
+                          <p className="font-medium">{produto.nome}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Código: {produto.codigo || 'N/A'} | Estoque: {produto.estoque_atual}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant="secondary">R$ {Number(produto.preco_venda).toFixed(2)}</Badge>
+                    </button>
+                  ))}
+                </Card>
+              )}
+
+              {produtoSearch && produtosFiltrados.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Nenhum produto encontrado. Cadastre produtos primeiro.
+                </p>
+              )}
+            </div>
+
+            {/* Items table */}
+            {itensVenda.length > 0 && (
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Produto</TableHead>
+                      <TableHead className="text-center">Qtd</TableHead>
+                      <TableHead className="text-right">Unitário</TableHead>
+                      <TableHead className="text-right">Subtotal</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {itensVenda.map((item) => (
+                      <TableRow key={item.produto_id}>
+                        <TableCell>{item.codigo || 'N/A'}</TableCell>
+                        <TableCell>{item.nome}</TableCell>
+                        <TableCell className="text-center">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantidade}
+                            onChange={(e) => handleUpdateQuantidade(item.produto_id, parseInt(e.target.value) || 0)}
+                            className="w-20 text-center mx-auto"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">R$ {item.preco_unitario.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-medium">R$ {item.subtotal.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.produto_id)}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {/* Payment and total */}
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+              <div>
+                <Label>Forma de Pagamento</Label>
+                <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                    <SelectItem value="PIX">PIX</SelectItem>
+                    <SelectItem value="CARTAO_DEBITO">Cartão Débito</SelectItem>
+                    <SelectItem value="CARTAO_CREDITO">Cartão Crédito</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-right">
+                <Label>Total da Venda</Label>
+                <p className="text-3xl font-bold text-success">R$ {totalVenda.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowVendaRapida(false); setItensVenda([]); }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleFinalizarVenda} disabled={itensVenda.length === 0}>
+              <DollarSign className="w-4 h-4 mr-2" />
+              Finalizar Venda
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
