@@ -23,6 +23,8 @@ const getTabLabel = (path: string): string => {
     '/fluxo-caixa': 'FLUXO CAIXA',
     '/relatorios': 'RELATÓRIOS',
     '/configuracoes': 'CONFIG',
+    '/configuracao-fiscal': 'FISCAL',
+    '/historico-notas': 'NOTAS',
     '/calendar': 'CALENDÁRIO',
   };
   return labels[path] || 'PÁGINA';

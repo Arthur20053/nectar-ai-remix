@@ -1,1 +1,7 @@
 project_id = "jrqxswocaowxvdoaypjz"
+
+[functions.analyze-finances]
+verify_jwt = true
+
+[functions.emit-fiscal-doc]
+verify_jwt = true
