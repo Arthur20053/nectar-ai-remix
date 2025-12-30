@@ -20,6 +20,8 @@ import ContasPagar from "./pages/ContasPagar";
 import FluxoCaixa from "./pages/FluxoCaixa";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
+import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
+import HistoricoNotas from "./pages/HistoricoNotas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +50,8 @@ const App = () => (
             <Route path="/fluxo-caixa" element={<FluxoCaixa />} />
             <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
+            <Route path="/configuracao-fiscal" element={<ConfiguracaoFiscal />} />
+            <Route path="/historico-notas" element={<HistoricoNotas />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

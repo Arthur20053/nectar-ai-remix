@@ -276,6 +276,96 @@ export type Database = {
           },
         ]
       }
+      fiscal_config: {
+        Row: {
+          ambiente: Database["public"]["Enums"]["ambiente_fiscal"]
+          bairro: string | null
+          cep: string | null
+          certificado_senha: string | null
+          certificado_url: string | null
+          certificado_validade: string | null
+          cidade: string | null
+          cnpj: string | null
+          configuracao_completa: boolean
+          created_at: string
+          csc_id: string | null
+          csc_token: string | null
+          endereco: string | null
+          id: string
+          inscricao_estadual: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          proximo_numero_nfce: number
+          proximo_numero_nfe: number
+          razao_social: string | null
+          regime_tributario: Database["public"]["Enums"]["regime_tributario"]
+          serie_nfce: number
+          serie_nfe: number
+          telefone: string | null
+          uf: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ambiente?: Database["public"]["Enums"]["ambiente_fiscal"]
+          bairro?: string | null
+          cep?: string | null
+          certificado_senha?: string | null
+          certificado_url?: string | null
+          certificado_validade?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          configuracao_completa?: boolean
+          created_at?: string
+          csc_id?: string | null
+          csc_token?: string | null
+          endereco?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          proximo_numero_nfce?: number
+          proximo_numero_nfe?: number
+          razao_social?: string | null
+          regime_tributario?: Database["public"]["Enums"]["regime_tributario"]
+          serie_nfce?: number
+          serie_nfe?: number
+          telefone?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ambiente?: Database["public"]["Enums"]["ambiente_fiscal"]
+          bairro?: string | null
+          cep?: string | null
+          certificado_senha?: string | null
+          certificado_url?: string | null
+          certificado_validade?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          configuracao_completa?: boolean
+          created_at?: string
+          csc_id?: string | null
+          csc_token?: string | null
+          endereco?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          proximo_numero_nfce?: number
+          proximo_numero_nfe?: number
+          razao_social?: string | null
+          regime_tributario?: Database["public"]["Enums"]["regime_tributario"]
+          serie_nfce?: number
+          serie_nfe?: number
+          telefone?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fornecedores: {
         Row: {
           cep: string | null
@@ -328,6 +418,83 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          ambiente: Database["public"]["Enums"]["ambiente_fiscal"]
+          chave_acesso: string | null
+          cliente_cpf_cnpj: string | null
+          cliente_nome: string | null
+          codigo_status_sefaz: number | null
+          created_at: string
+          data_autorizacao: string | null
+          id: string
+          mensagem_sefaz: string | null
+          numero: number
+          pdf_url: string | null
+          protocolo_autorizacao: string | null
+          serie: number
+          status: Database["public"]["Enums"]["invoice_status"]
+          tipo: string
+          updated_at: string
+          user_id: string
+          valor_total: number
+          venda_id: string | null
+          xml_url: string | null
+        }
+        Insert: {
+          ambiente: Database["public"]["Enums"]["ambiente_fiscal"]
+          chave_acesso?: string | null
+          cliente_cpf_cnpj?: string | null
+          cliente_nome?: string | null
+          codigo_status_sefaz?: number | null
+          created_at?: string
+          data_autorizacao?: string | null
+          id?: string
+          mensagem_sefaz?: string | null
+          numero: number
+          pdf_url?: string | null
+          protocolo_autorizacao?: string | null
+          serie: number
+          status?: Database["public"]["Enums"]["invoice_status"]
+          tipo?: string
+          updated_at?: string
+          user_id: string
+          valor_total?: number
+          venda_id?: string | null
+          xml_url?: string | null
+        }
+        Update: {
+          ambiente?: Database["public"]["Enums"]["ambiente_fiscal"]
+          chave_acesso?: string | null
+          cliente_cpf_cnpj?: string | null
+          cliente_nome?: string | null
+          codigo_status_sefaz?: number | null
+          created_at?: string
+          data_autorizacao?: string | null
+          id?: string
+          mensagem_sefaz?: string | null
+          numero?: number
+          pdf_url?: string | null
+          protocolo_autorizacao?: string | null
+          serie?: number
+          status?: Database["public"]["Enums"]["invoice_status"]
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+          valor_total?: number
+          venda_id?: string | null
+          xml_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
             referencedColumns: ["id"]
           },
         ]
@@ -391,44 +558,59 @@ export type Database = {
       }
       produtos: {
         Row: {
+          cest: string | null
+          cfop_padrao: string | null
           codigo: string | null
           created_at: string
           descricao: string | null
           estoque_atual: number | null
           estoque_minimo: number | null
           id: string
+          ncm: string | null
           nome: string
+          origem_mercadoria: number | null
           preco_custo: number | null
           preco_venda: number | null
           unidade: string | null
+          unidade_comercial: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          cest?: string | null
+          cfop_padrao?: string | null
           codigo?: string | null
           created_at?: string
           descricao?: string | null
           estoque_atual?: number | null
           estoque_minimo?: number | null
           id?: string
+          ncm?: string | null
           nome: string
+          origem_mercadoria?: number | null
           preco_custo?: number | null
           preco_venda?: number | null
           unidade?: string | null
+          unidade_comercial?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          cest?: string | null
+          cfop_padrao?: string | null
           codigo?: string | null
           created_at?: string
           descricao?: string | null
           estoque_atual?: number | null
           estoque_minimo?: number | null
           id?: string
+          ncm?: string | null
           nome?: string
+          origem_mercadoria?: number | null
           preco_custo?: number | null
           preco_venda?: number | null
           unidade?: string | null
+          unidade_comercial?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -633,7 +815,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      ambiente_fiscal: "homologacao" | "producao"
+      invoice_status:
+        | "pendente"
+        | "processando"
+        | "autorizada"
+        | "rejeitada"
+        | "cancelada"
+      regime_tributario: "simples_nacional" | "lucro_presumido" | "lucro_real"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -760,6 +949,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      ambiente_fiscal: ["homologacao", "producao"],
+      invoice_status: [
+        "pendente",
+        "processando",
+        "autorizada",
+        "rejeitada",
+        "cancelada",
+      ],
+      regime_tributario: ["simples_nacional", "lucro_presumido", "lucro_real"],
+    },
   },
 } as const

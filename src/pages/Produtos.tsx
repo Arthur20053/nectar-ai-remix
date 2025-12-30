@@ -10,9 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { Loader2, Plus, Search, Edit, Trash2, Package, AlertTriangle } from 'lucide-react';
+import { Loader2, Plus, Search, Edit, Trash2, Package, AlertTriangle, ExternalLink } from 'lucide-react';
 
 interface Produto {
   id: string;
@@ -24,6 +26,11 @@ interface Produto {
   estoque_atual: number;
   estoque_minimo: number;
   unidade: string;
+  ncm: string | null;
+  cest: string | null;
+  cfop_padrao: string | null;
+  unidade_comercial: string | null;
+  origem_mercadoria: number | null;
 }
 
 const ProdutosPage = () => {
@@ -43,6 +50,11 @@ const ProdutosPage = () => {
     estoque_atual: '',
     estoque_minimo: '',
     unidade: 'UN',
+    ncm: '',
+    cest: '',
+    cfop_padrao: '5102',
+    unidade_comercial: 'UN',
+    origem_mercadoria: '0',
   });
 
   useEffect(() => {
@@ -79,6 +91,11 @@ const ProdutosPage = () => {
         estoque_atual: parseInt(formData.estoque_atual) || 0,
         estoque_minimo: parseInt(formData.estoque_minimo) || 0,
         unidade: formData.unidade,
+        ncm: formData.ncm || null,
+        cest: formData.cest || null,
+        cfop_padrao: formData.cfop_padrao || '5102',
+        unidade_comercial: formData.unidade_comercial || 'UN',
+        origem_mercadoria: parseInt(formData.origem_mercadoria) || 0,
       };
 
       if (editingProduto) {
@@ -110,6 +127,11 @@ const ProdutosPage = () => {
       estoque_atual: produto.estoque_atual.toString(),
       estoque_minimo: produto.estoque_minimo.toString(),
       unidade: produto.unidade,
+      ncm: produto.ncm || '',
+      cest: produto.cest || '',
+      cfop_padrao: produto.cfop_padrao || '5102',
+      unidade_comercial: produto.unidade_comercial || 'UN',
+      origem_mercadoria: (produto.origem_mercadoria ?? 0).toString(),
     });
     setShowDialog(true);
   };
@@ -128,7 +150,7 @@ const ProdutosPage = () => {
 
   const resetForm = () => {
     setEditingProduto(null);
-    setFormData({ codigo: '', nome: '', descricao: '', preco_custo: '', preco_venda: '', estoque_atual: '', estoque_minimo: '', unidade: 'UN' });
+    setFormData({ codigo: '', nome: '', descricao: '', preco_custo: '', preco_venda: '', estoque_atual: '', estoque_minimo: '', unidade: 'UN', ncm: '', cest: '', cfop_padrao: '5102', unidade_comercial: 'UN', origem_mercadoria: '0' });
   };
 
   const filteredProdutos = produtos.filter((p) =>
@@ -242,44 +264,110 @@ const ProdutosPage = () => {
         </Card>
 
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingProduto ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Código</Label>
-                <Input value={formData.codigo} onChange={(e) => setFormData((p) => ({ ...p, codigo: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Unidade</Label>
-                <Input value={formData.unidade} onChange={(e) => setFormData((p) => ({ ...p, unidade: e.target.value }))} />
-              </div>
-              <div className="col-span-2">
-                <Label>Nome *</Label>
-                <Input value={formData.nome} onChange={(e) => setFormData((p) => ({ ...p, nome: e.target.value }))} />
-              </div>
-              <div className="col-span-2">
-                <Label>Descrição</Label>
-                <Input value={formData.descricao} onChange={(e) => setFormData((p) => ({ ...p, descricao: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Preço de Custo (R$)</Label>
-                <Input type="number" step="0.01" value={formData.preco_custo} onChange={(e) => setFormData((p) => ({ ...p, preco_custo: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Preço de Venda (R$)</Label>
-                <Input type="number" step="0.01" value={formData.preco_venda} onChange={(e) => setFormData((p) => ({ ...p, preco_venda: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Estoque Atual</Label>
-                <Input type="number" value={formData.estoque_atual} onChange={(e) => setFormData((p) => ({ ...p, estoque_atual: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Estoque Mínimo</Label>
-                <Input type="number" value={formData.estoque_minimo} onChange={(e) => setFormData((p) => ({ ...p, estoque_minimo: e.target.value }))} />
-              </div>
-            </div>
+            <Tabs defaultValue="geral" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="geral">Geral</TabsTrigger>
+                <TabsTrigger value="fiscal">Fiscal</TabsTrigger>
+              </TabsList>
+              <TabsContent value="geral" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Código</Label>
+                    <Input value={formData.codigo} onChange={(e) => setFormData((p) => ({ ...p, codigo: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Unidade</Label>
+                    <Input value={formData.unidade} onChange={(e) => setFormData((p) => ({ ...p, unidade: e.target.value }))} />
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Nome *</Label>
+                    <Input value={formData.nome} onChange={(e) => setFormData((p) => ({ ...p, nome: e.target.value }))} />
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Descrição</Label>
+                    <Input value={formData.descricao} onChange={(e) => setFormData((p) => ({ ...p, descricao: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Preço de Custo (R$)</Label>
+                    <Input type="number" step="0.01" value={formData.preco_custo} onChange={(e) => setFormData((p) => ({ ...p, preco_custo: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Preço de Venda (R$)</Label>
+                    <Input type="number" step="0.01" value={formData.preco_venda} onChange={(e) => setFormData((p) => ({ ...p, preco_venda: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Estoque Atual</Label>
+                    <Input type="number" value={formData.estoque_atual} onChange={(e) => setFormData((p) => ({ ...p, estoque_atual: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Estoque Mínimo</Label>
+                    <Input type="number" value={formData.estoque_minimo} onChange={(e) => setFormData((p) => ({ ...p, estoque_minimo: e.target.value }))} />
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="fiscal" className="space-y-4 mt-4">
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-amber-500">Preencha os dados fiscais para emitir NF-e/NFC-e</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      NCM
+                      <a href="https://www.ibpt.com.br/tabelas/ncm" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1 text-xs">
+                        Consultar <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </Label>
+                    <Input placeholder="12345678" maxLength={8} value={formData.ncm} onChange={(e) => setFormData((p) => ({ ...p, ncm: e.target.value.replace(/\D/g, '') }))} />
+                  </div>
+                  <div>
+                    <Label>CEST</Label>
+                    <Input placeholder="1234567" maxLength={7} value={formData.cest} onChange={(e) => setFormData((p) => ({ ...p, cest: e.target.value.replace(/\D/g, '') }))} />
+                  </div>
+                  <div>
+                    <Label>CFOP Padrão</Label>
+                    <Select value={formData.cfop_padrao} onValueChange={(v) => setFormData((p) => ({ ...p, cfop_padrao: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5102">5102 - Venda Mercadoria</SelectItem>
+                        <SelectItem value="5405">5405 - Venda ST</SelectItem>
+                        <SelectItem value="5949">5949 - Outras Saídas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Unidade Comercial</Label>
+                    <Select value={formData.unidade_comercial} onValueChange={(v) => setFormData((p) => ({ ...p, unidade_comercial: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="UN">UN - Unidade</SelectItem>
+                        <SelectItem value="KG">KG - Quilograma</SelectItem>
+                        <SelectItem value="CX">CX - Caixa</SelectItem>
+                        <SelectItem value="PC">PC - Peça</SelectItem>
+                        <SelectItem value="LT">LT - Litro</SelectItem>
+                        <SelectItem value="MT">MT - Metro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Origem da Mercadoria</Label>
+                    <Select value={formData.origem_mercadoria} onValueChange={(v) => setFormData((p) => ({ ...p, origem_mercadoria: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">0 - Nacional</SelectItem>
+                        <SelectItem value="1">1 - Estrangeira (Import. Direta)</SelectItem>
+                        <SelectItem value="2">2 - Estrangeira (Adq. Mercado Interno)</SelectItem>
+                        <SelectItem value="3">3 - Nacional (Conteúdo Import. &gt; 40%)</SelectItem>
+                        <SelectItem value="5">5 - Nacional (Conteúdo Import. &lt;= 40%)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDialog(false)}>Cancelar</Button>
               <Button onClick={handleSave}>Salvar</Button>
